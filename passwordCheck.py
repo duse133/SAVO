@@ -158,6 +158,15 @@ def Sound_Fail():				#한번이랑 여러번잉랑 소리 다르게
 
     pwm1.stop()
     #GPIO.cleanup()
+
+def Sound_init():
+    pwm1 = GPIO.PWM(buzzer, 1)
+    pwm1.start(50.0)
+    
+    pwm1.ChangeFrequency(262)
+    time.sleep(0.3)
+    pwm1.ChangeFrequency(294)
+    time.sleep(0.3)
     
     
 button_pin = 13
@@ -184,13 +193,14 @@ def button_callback(channel):			#버튼 눌렀을대 초기화 or 문 강제 열
             print(press_duration)
             if press_duration >= 5 :
                 print("5초 넘음")
-                #비밀번호 초기화 + 얼굴인식 초기화
+                Sound_init()
+                init_password()
+                #비밀번호 초기화
             else :
                 if Door == False :
                     Door = True
                     Open()
                     time.sleep(1)
-    #                 hl.learn(1)
                 else :
                     Door = False
                     print("문 닫힘")
@@ -202,8 +212,32 @@ button2_pin = 26
 GPIO.setwarnings(False)
 GPIO.setup(button2_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
+button2_pressed_time = 0
+is_button2_pressed = False
 def face(self) :
-    print("얼굴 누름")
+    hl.learn(1)
+    print("얼굴 등록")
+    
+    global button2_pressed_time, is_button2_pressed
+
+    
+    print("Button pushed")
+    if GPIO.input(button2_pin) == GPIO.LOW:
+          button2_pressed_time = time.time()
+          print("누름")
+          is_button2_pressed = True
+    else :
+        print("버튼 때기")
+        
+        if is_button2_pressed:
+            press_duration = time.time() - button2_pressed_time
+            print(press_duration)
+            if press_duration >= 5 :
+                print("5초 넘음")
+                Sound_init()
+                #얼굴 초기화
+                hl.forget()
+            is_button2_pressed = False
 
 GPIO.add_event_detect(button2_pin, GPIO.BOTH, callback=face)
     
@@ -213,7 +247,7 @@ def init_password():
     hl.forget()
     password = input("비밀번호 값 입력")
     
-    hl.learnedBlocks()
+    
     
 GPIO.add_event_detect(button_pin, GPIO.BOTH, callback=button_callback)
     
@@ -232,7 +266,7 @@ def check() :
                 for i in hl.requestAll() :
                     json.dumps(i.__dict__)
                 
-                if i is None :
+                if i is None:
                     print("얼굴 인식 실패")
                     Sound_Fail()
                     continue
@@ -241,7 +275,11 @@ def check() :
                     learned_value = i.__dict__['learned']
                     #print(learned_value)
                     
-                if learned_value == True :
+                if learned_value == False:
+                    print("얼굴 인식 실패")
+                    Sound_Fail()
+                    continue
+                elif learned_value == True:
                     print("얼굴 인증 완료")
                     print("비밀번호 통과")
                     Sound_Success()
