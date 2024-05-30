@@ -5,6 +5,7 @@ from huskylib import HuskyLensLibrary
 import RPi.GPIO as GPIO
 from datetime import datetime
 import os
+import threading
 
 hl = HuskyLensLibrary("SERIAL", "/dev/ttyUSB0", 3000000)
 
@@ -118,8 +119,54 @@ def printObjectNicely(obj):
 def angle_to_duty_cycle(angle):
     return angle / 18 + 2.5
 
+TRIGER = 23
+ECHO = 24
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(TRIGER,GPIO.OUT)
+GPIO.setup(ECHO, GPIO.IN)
+def waves() :
+    startTime = time.time()
+    global flag_exit
+    try:
+        while True:
+            if flag_exit : 
+                GPIO.output(TRIGER, GPIO.LOW)
+                time.sleep(0.1)
+                GPIO.output(TRIGER, GPIO.HIGH)
+                time.sleep(0.00002)
+                GPIO.output(TRIGER, GPIO.LOW)
+                
+                while GPIO.input(ECHO) == GPIO.LOW:
+                    startTime = time.time()
+                
+                while GPIO.input(ECHO) == GPIO.HIGH:
+                    endTime = time.time()
+                
+                period = endTime - startTime
+                dist1 = round(period * 1000000/58, 2)
+                dist2 = round(period * 17241, 2)
+                print("Dist1", dist1, "cm", ", Dist2", dist2,"cm")
+                if dist1 < 10 and dist2<10:
+                    print("detect")
+                    correctTime = time.time() - detectTime
+                    print(correctTime)
+                    if(correctTime > 5):
+                        print("문닫힘")
+                        Close()
+                else:
+                    detectTime = time.time()
+                  
+    except:
+        GPIO.cleanup()
+
+t1 = threading.Thread(target=waves)
+flag_exit = False
+
 def Open():
     #try:
+    global flag_exit
+    flag_exit = True
     global Door
     Door = True
     pwm.ChangeDutyCycle(angle_to_duty_cycle(170))
@@ -127,11 +174,13 @@ def Open():
 
     #except KeyboardInterrupt:
     #pwm.stop()
-   # GPIO.cleanup()
+    #GPIO.cleanup()
    
 def Close():
     global Door
     Door = False
+    global flag_exit
+    flag_exit = False
     pwm.ChangeDutyCycle(angle_to_duty_cycle(10))
 
 
@@ -250,9 +299,13 @@ def init_password():
     
     
 GPIO.add_event_detect(button_pin, GPIO.BOTH, callback=button_callback)
-    
+
+
+
+
 def check() :
     ex = 1
+        
     while(ex == 1):
         if compare_passwords():
             #부저 3초동안 알림음 발생
@@ -284,7 +337,6 @@ def check() :
                     print("비밀번호 통과")
                     Sound_Success()
                     Open()
-                    
                     break
 
             else:
@@ -295,6 +347,6 @@ def check() :
 
 
 if __name__ == "__main__":
-    
+    t1.start()
     while True :
         check()
