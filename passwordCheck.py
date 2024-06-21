@@ -122,6 +122,7 @@ def angle_to_duty_cycle(angle):
 TRIGER = 23
 ECHO = 24
 
+waves_stop = False
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(TRIGER,GPIO.OUT)
 GPIO.setup(ECHO, GPIO.IN)
@@ -129,8 +130,9 @@ def waves() :
     startTime = time.time()
     global flag_exit
     try:
+        detectTime = time.time()
         while True:
-            if flag_exit : 
+            if flag_exit :
                 GPIO.output(TRIGER, GPIO.LOW)
                 time.sleep(0.1)
                 GPIO.output(TRIGER, GPIO.HIGH)
@@ -146,7 +148,6 @@ def waves() :
                 period = endTime - startTime
                 dist1 = round(period * 1000000/58, 2)
                 dist2 = round(period * 17241, 2)
-                print("Dist1", dist1, "cm", ", Dist2", dist2,"cm")
                 if dist1 < 10 and dist2<10:
                     print("detect")
                     correctTime = time.time() - detectTime
@@ -156,6 +157,8 @@ def waves() :
                         Close()
                 else:
                     detectTime = time.time()
+            else:
+                detectTime = time.time()
                   
     except:
         GPIO.cleanup()
@@ -170,7 +173,6 @@ def Open():
     global Door
     Door = True
     pwm.ChangeDutyCycle(angle_to_duty_cycle(170))
-    
 
     #except KeyboardInterrupt:
     #pwm.stop()
@@ -226,7 +228,7 @@ GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 Door = False
 button_pressed_time = 0
 is_button_pressed = False
-def button_callback(channel):			#버튼 눌렀을대 초기화 or 문 강제 열기
+def button_callback(channel):			#버튼 꾹 눌렀을때 초기화 or 문 강제 열고 닫기
     global Door, button_pressed_time, is_button_pressed
 
     
@@ -276,16 +278,16 @@ def face(self) :
           print("누름")
           is_button2_pressed = True
     else :
-        print("버튼 때기")
-        
+        print("버튼 떼기")
+            
         if is_button2_pressed:
             press_duration = time.time() - button2_pressed_time
             print(press_duration)
             if press_duration >= 5 :
-                print("5초 넘음")
                 Sound_init()
                 #얼굴 초기화
                 hl.forget()
+                print("얼굴초기화")
             is_button2_pressed = False
 
 GPIO.add_event_detect(button2_pin, GPIO.BOTH, callback=face)
@@ -350,3 +352,60 @@ if __name__ == "__main__":
     t1.start()
     while True :
         check()
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
